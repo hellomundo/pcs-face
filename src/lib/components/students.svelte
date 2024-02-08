@@ -40,3 +40,13 @@
         </tbody>
     </table>
 </div>
+
+<style>
+    td {
+        padding: 0.5em;
+    }
+    table {
+        border: 1px solid #eee;
+    }
+
+</style>

@@ -21,6 +21,7 @@
         });
     }
 
+    // map server data new array with attendance data
     const localStudents: Attendant[] = data.students.map((student) => {
         return {
             id: student.id,
@@ -29,14 +30,14 @@
             status: 'absent'
         }
     });
-
+    // then update the store
     attendance.update((value) => {
         return [...value, ...localStudents]
     });
 
     function resetAttendance() {
         console.log('reset attendance')
-        localStudents.forEach((student) => {
+        $attendance.forEach((student) => {
             student.status = 'absent';
         });
     }
@@ -110,6 +111,7 @@
     #outside {
         display: flex;
         flex-direction: row;
+        gap: 3em;
     }
     #video-container {
         position: relative;
@@ -118,9 +120,6 @@
         position: relative;
     }
     #student-container {
-        position: relative;
-    }
-    #add-container {
         position: relative;
     }
 </style>

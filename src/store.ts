@@ -11,3 +11,17 @@ export type Attendant = {
 export const newStudent = writable({name: '', face: ''})
 export const attendance: Writable<Attendant[]> = writable([])
 
+export const markAttendance = (name: string, status: string) => {
+    attendance.update((attendants: Attendant[]) => {
+        return attendants.map((attendant: Attendant) => {
+            if (attendant.name === name) {
+
+                return {
+                    ...attendant,
+                    status
+                }
+            }
+            return attendant
+        })
+    })
+}

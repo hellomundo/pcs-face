@@ -2,7 +2,7 @@
     console.log('starting at ' + new Date().toLocaleTimeString());
 
     import { createEventDispatcher } from "svelte";
-    import { mode, newStudent } from "../../store";
+    import { mode, attendance, newStudent, markAttendance } from "../../store";
     import { page } from "$app/stores";
  
 
@@ -18,12 +18,17 @@
     let caputureInterval: NodeJS.Timeout;
     let snapshot: number = 0;
 
+    // an array of just face descriptors
+    let knownStudents: faceapi.LabeledFaceDescriptors[] = []
+
     const dispatch = createEventDispatcher();
 
     onMount(async () => {
         console.log('mounting and loading models at ' + new Date().toLocaleTimeString());
         await loadModels();
         console.log('finished loading models at ' + new Date().toLocaleTimeString());
+        updateKnownStudents();
+
         await startCamera()
         console.log('video: '+ video);
         await startUp();
@@ -41,7 +46,28 @@
             }
         });
 
+        attendance.subscribe((value) => {
+            updateKnownStudents();
+        });
+
     });
+
+    function updateKnownStudents() {
+        //console.log('updating known students', $attendance.length);
+        knownStudents = $attendance.map((student) => {
+            return faceapi.LabeledFaceDescriptors.fromJSON(student.face)
+        });
+    }
+
+    function isAbsent(name: string) {
+        // find the student in the attendance list
+        const student = $attendance.find((student) => {
+            return (student.name == name);
+        });
+
+        // check for absence
+        return (student && student.status == 'absent')
+    }
 
     async function loadModels() {
         await faceapi.loadSsdMobilenetv1Model('/models');
@@ -82,13 +108,30 @@
         console.log('starting recognition loop at ' + new Date().toLocaleTimeString());
         const displaySize = { width: video.width, height: video.height };
 
+        console.log('starting recog loop with known students: ', knownStudents.length);
+        const faceMatcher = new faceapi.FaceMatcher(knownStudents, 0.6);
+
         recognitionInterval = setInterval(async () => {
                 const detections = await faceapi.detectAllFaces(video).withFaceLandmarks().withFaceDescriptors();
                 const resizedDetections = faceapi.resizeResults(detections, displaySize);
-                //const results = resizedDetections;
-                ////console.log(results)
+                const results = resizedDetections.map(d => faceMatcher.findBestMatch(d.descriptor));
                 canvas.getContext('2d', {willReadFrequently: true})?.clearRect(0, 0, canvas.width, canvas.height);
-                faceapi.draw.drawDetections(canvas, resizedDetections);
+
+
+                results.forEach((result, i) => {
+                    const box = resizedDetections[i].detection.box;
+                    const drawBox = new faceapi.draw.DrawBox(box, { label: result.toString(), boxColor: "rgba(163,93,93,1)"});
+                    drawBox.draw(canvas);
+                    // mark the student as present
+                    if(result.label != 'unknown') {
+                        if (isAbsent(result.label)) {
+                            markAttendance(result.label, 'present');
+                        }
+                    }
+                });
+
+                //canvas.getContext('2d', {willReadFrequently: true})?.clearRect(0, 0, canvas.width, canvas.height);
+                //faceapi.draw.drawDetections(canvas, resizedDetections);
                 //faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
             }, 100);
     }
@@ -113,8 +156,6 @@
             } else {
                 clearInterval(caputureInterval);
                 const newFace = new faceapi.LabeledFaceDescriptors($newStudent.name, descriptors);
-                //knownStudents.push(newFace);
-                //console.log("new face: ", newFace);
                 finishCapture(newFace);
             }
         }, 500);
@@ -128,9 +169,6 @@
         dispatch('capture');
 
     }
-
-
-
 
 
 </script>
