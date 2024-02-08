@@ -1,0 +1,27 @@
+{
+  "version": "5",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1706741325698,
+      "tag": "0000_remarkable_kat_farrell",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "5",
+      "when": 1707267031718,
+      "tag": "0001_cloudy_mordo",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1707268388331,
+      "tag": "0002_fantastic_fenris",
+      "breakpoints": true
+    }
+  ]
+}
