@@ -3,9 +3,11 @@
     import Students from "$lib/components/students.svelte";
     import Addform from "$lib/components/addform.svelte";
 
-    type Mode = 'recognize' | 'enroll';
+    type Mode = 'recognize' | 'enroll' | 'capture';
 
     export let data;
+
+    export let newName: string;
 
     import { mode } from "../store";
     mode.subscribe((value) => {
@@ -37,9 +39,18 @@
             student.status = 'absent';
         });
     }
+    function startRecognize() {
+        console.log('start recognize');
+        mode.set('recognize');
+    }
 
+    function startEnroll() {
+        console.log('start enroll');
+        mode.set('enroll');
+    }
     function startCapture() {
-        console.log('start capture');
+        console.log('start capture for: ', newName);
+        mode.set('capture');
     }
 
     resetAttendance();
@@ -59,14 +70,18 @@
             <Students />
             <div>
                 <button on:click={() => resetAttendance()}>Reset</button>
-                <button on:click={() => toggleMode()}>Add Student</button>
+                <button on:click={() => startEnroll()}>Add Student</button>
             </div>
         </div>
-        {:else}
-        <div id="add-container">
+        {:else if $mode === 'enroll'}
+        <div id="enroll-container">
             <h2>Add Student</h2>
-            <input type="text" id="name" name="name" placeholder="Name" />
-            <button on:click={() => console.log('submit')}>Submit</button>
+            <input bind:value={newName} type="text" id="name" name="name" placeholder="Name" />
+            <button on:click={() => startCapture()}>Submit</button>
+        </div>
+        {:else if $mode === 'capture'}
+        <div id="capture-container">
+            <h2>Capturing...</h2>
         </div>
         {/if}
     </div>

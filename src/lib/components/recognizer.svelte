@@ -4,23 +4,6 @@
     import { mode } from "../../store";
     import { page } from "$app/stores";
  
-    mode.subscribe((value) => {
-        console.log('RECOGNIZER- mode changed to: ', value);
-        if(value != "recognize") {
-            //clearInterval(recognitionInterval);
-            //startCaptureLoop();
-        }
-    });
-
-    function toggleMode() {
-        mode.update((value) => {
-            if (value === 'recognize') {
-                return 'enroll';
-            } else {
-                return 'recognize';
-            }
-        });
-    }
 
 
     import { onMount } from 'svelte';
@@ -34,6 +17,7 @@
     let caputureInterval: NodeJS.Timeout;
     let snapshot: number = 0;
 
+
     onMount(async () => {
         console.log('mounting and loading models at ' + new Date().toLocaleTimeString());
         await loadModels();
@@ -41,6 +25,20 @@
         await startCamera()
         console.log('video: '+ video);
         await startUp();
+
+        mode.subscribe((value) => {
+            console.log('RECOGNIZER- mode changed to: ', value);
+            if(value == "capture") {
+                console.log('starting capture loop');
+                clearInterval(recognitionInterval);
+                startCaptureLoop();
+            } else if(value == "recognize") {
+                console.log('starting recognition loop');
+                clearInterval(caputureInterval);
+                startRecognitionLoop();
+            }
+        });
+
     });
 
     async function loadModels() {
@@ -103,7 +101,7 @@
         caputureInterval = setInterval(async () => {
             if(snapshot < 3) {
                 const detections = await faceapi.detectAllFaces(video).withFaceLandmarks().withFaceDescriptors();
-                if(detections) {
+                if(detections.length > 0) {
                     console.log('captured: ', detections);
                     descriptors.push(detections[0].descriptor);
                     snapshot++;
@@ -115,11 +113,20 @@
                 const newFace = new faceapi.LabeledFaceDescriptors('new', descriptors);
                 //knownStudents.push(newFace);
                 console.log("new face: ", newFace);
-                toggleMode();
-                startRecognitionLoop();
+                finishCapture(newFace);
             }
         }, 500);
     }
+
+    function finishCapture(newFace: any) {
+        console.log('finishing capture');
+        // send the new users face to the server
+        // then start the recognition loop again
+
+        mode.set('recognize');
+    }
+
+
 
 
 
