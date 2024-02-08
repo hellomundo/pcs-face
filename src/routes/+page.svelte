@@ -3,8 +3,6 @@
     import Students from "$lib/components/students.svelte";
     import Addform from "$lib/components/addform.svelte";
 
-    type Mode = 'recognize' | 'enroll' | 'capture';
-
     export let data;
 
     export let newName: string;
