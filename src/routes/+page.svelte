@@ -2,12 +2,11 @@
     import Recognizer from "$lib/components/recognizer.svelte";
     import Students from "$lib/components/students.svelte";
     import Addform from "$lib/components/addform.svelte";
+    import { mode, attendance, newStudent } from "../store";
+    import type { Attendant } from "../store";
 
     export let data;
-
-    export let newName: string;
-
-    import { mode } from "../store";
+    
     mode.subscribe((value) => {
         console.log('PAGE- mode changed to: ', value);
     });
@@ -22,13 +21,17 @@
         });
     }
 
-    let localStudents = data.students.map((student) => {
+    const localStudents: Attendant[] = data.students.map((student) => {
         return {
             id: student.id,
-            name: student.name,
-            face: student.face,
+            name: student.name as string,
+            face: student.face as string,
             status: 'absent'
         }
+    });
+
+    attendance.update((value) => {
+        return [...value, ...localStudents]
     });
 
     function resetAttendance() {
@@ -47,8 +50,26 @@
         mode.set('enroll');
     }
     function startCapture() {
-        console.log('start capture for: ', newName);
+        console.log('start capture for: ', $newStudent.name);
         mode.set('capture');
+    }
+
+    async function handleCapture() {
+        console.log('handle capture');
+        console.log('captured: ', $newStudent.face);
+        console.log('trying to save student: ', $newStudent.name);
+
+        // store to server
+        const response = await fetch('/api/students', {
+			method: 'POST',
+			body: JSON.stringify($newStudent),
+			headers: {
+				'content-type': 'application/json',
+			},
+		});
+        console.log('response: ', response);
+
+        mode.set('recognize');
     }
 
     resetAttendance();
@@ -59,7 +80,7 @@
 
 <div id="outside">
     <div id="video-container">
-        <Recognizer />
+        <Recognizer on:capture={handleCapture}/>
     </div>
     <div id="context-container">
         {#if $mode === 'recognize'}
@@ -74,7 +95,7 @@
         {:else if $mode === 'enroll'}
         <div id="enroll-container">
             <h2>Add Student</h2>
-            <input bind:value={newName} type="text" id="name" name="name" placeholder="Name" />
+            <input bind:value={$newStudent.name} type="text" id="name" name="name" placeholder="Name" />
             <button on:click={() => startCapture()}>Submit</button>
         </div>
         {:else if $mode === 'capture'}

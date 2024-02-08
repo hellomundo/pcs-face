@@ -1,7 +1,8 @@
 <script lang="ts">
     console.log('starting at ' + new Date().toLocaleTimeString());
 
-    import { mode } from "../../store";
+    import { createEventDispatcher } from "svelte";
+    import { mode, newStudent } from "../../store";
     import { page } from "$app/stores";
  
 
@@ -17,6 +18,7 @@
     let caputureInterval: NodeJS.Timeout;
     let snapshot: number = 0;
 
+    const dispatch = createEventDispatcher();
 
     onMount(async () => {
         console.log('mounting and loading models at ' + new Date().toLocaleTimeString());
@@ -110,20 +112,21 @@
                 }
             } else {
                 clearInterval(caputureInterval);
-                const newFace = new faceapi.LabeledFaceDescriptors('new', descriptors);
+                const newFace = new faceapi.LabeledFaceDescriptors($newStudent.name, descriptors);
                 //knownStudents.push(newFace);
-                console.log("new face: ", newFace);
+                //console.log("new face: ", newFace);
                 finishCapture(newFace);
             }
         }, 500);
     }
 
-    function finishCapture(newFace: any) {
+    async function finishCapture(newFace: any) {
         console.log('finishing capture');
         // send the new users face to the server
         // then start the recognition loop again
+        $newStudent.face = await newFace.toJSON();
+        dispatch('capture');
 
-        mode.set('recognize');
     }
 
 

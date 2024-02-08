@@ -1,13 +1,22 @@
 <script lang="ts">
 
     import { page } from "$app/stores";
-    import { mode } from "../../store";
+    import { mode, attendance } from "../../store";
+    import type { Attendant } from "../../store";
+
+    let students: Attendant[] = [];
 
     mode.subscribe((value) => {
         console.log('STUDENTS: mode changed to: ', value);
     });
 
-    console.log('I Have students: ', $page.data);
+    attendance.subscribe((value) => {
+        students = value;
+    });
+
+
+    console.log('I Have students: ', attendance);
+    console.log('I have local students: ',)
 
 </script>
 
@@ -21,7 +30,7 @@
             </tr>
         </thead>
         <tbody>
-            {#each $page.data.students as student}
+            {#each students as student}
                 <tr>
                     <td>{student.id}</td>
                     <td>{student.name}</td>
