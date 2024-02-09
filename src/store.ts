@@ -15,7 +15,7 @@ export const markAttendance = (name: string, status: string) => {
     attendance.update((attendants: Attendant[]) => {
         return attendants.map((attendant: Attendant) => {
             if (attendant.name === name) {
-
+                console.log("Marking attendance for ", name, " as ", status)
                 return {
                     ...attendant,
                     status

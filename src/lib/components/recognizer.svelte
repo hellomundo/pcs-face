@@ -53,7 +53,7 @@
     });
 
     function updateKnownStudents() {
-        //console.log('updating known students', $attendance.length);
+        console.log('updating known students', $attendance.length);
         knownStudents = $attendance.map((student) => {
             return faceapi.LabeledFaceDescriptors.fromJSON(student.face)
         });
