@@ -25,7 +25,8 @@
         <thead>
             <tr>
                 <th>Student ID</th>
-                <th>First Name</th>
+                <th>Name</th>
+                <th>Time in</th>
                 <th>Status</th>
             </tr>
         </thead>
@@ -34,6 +35,7 @@
                 <tr>
                     <td>{student.id}</td>
                     <td>{student.name}</td>
+                    <td></td>
                     <td>{student.status}</td>
                 </tr>
             {/each}
@@ -42,8 +44,10 @@
 </div>
 
 <style>
-    td {
+    td, th {
         padding: 0.5em;
+        border: 1px solid #eee;
+        text-align: left;
     }
     table {
         border: 1px solid #eee;

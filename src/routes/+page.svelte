@@ -41,6 +41,15 @@
             student.status = 'absent';
         });
     }
+
+    function deleteAllStudents() {
+        console.log('delete all students');
+        fetch('/api/students', {
+            method: 'DELETE'
+        });
+        $attendance = [];
+    }
+
     function startRecognize() {
         console.log('start recognize');
         mode.set('recognize');
@@ -48,6 +57,7 @@
 
     function startEnroll() {
         console.log('start enroll');
+        $newStudent.name = '';
         mode.set('enroll');
     }
     function startCapture() {
@@ -55,10 +65,17 @@
         mode.set('capture');
     }
 
+    function cancelCapture() {
+        console.log('cancel capture');
+        mode.set('recognize');
+    }
+
     async function handleCapture() {
         console.log('handle capture');
         console.log('captured: ', $newStudent.face);
         console.log('trying to save student: ', $newStudent.name);
+        // clear form field
+
 
         // store to server
         const response = await fetch('/api/students', {
@@ -68,7 +85,12 @@
 				'content-type': 'application/json',
 			},
 		});
-        console.log('response: ', response);
+
+        const captured = await response.json()
+        const stu = captured[0];
+        stu.status = 'present';
+        console.log('response: ', stu);
+        $attendance = [...$attendance, stu];
 
         mode.set('recognize');
     }
@@ -89,7 +111,8 @@
             <h2>Students</h2>
             <Students />
             <div>
-                <button on:click={() => resetAttendance()}>Reset</button>
+                <button on:click={() => resetAttendance()}>Reset Attendance</button>
+                <button on:click={() => deleteAllStudents()}>Delete All Students</button>
                 <button on:click={() => startEnroll()}>Add Student</button>
             </div>
         </div>
@@ -98,6 +121,7 @@
             <h2>Add Student</h2>
             <input bind:value={$newStudent.name} type="text" id="name" name="name" placeholder="Name" />
             <button on:click={() => startCapture()}>Submit</button>
+            <button on:click={() => cancelCapture()}>Cancel</button>
         </div>
         {:else if $mode === 'capture'}
         <div id="capture-container">

@@ -17,6 +17,7 @@
     let recognitionInterval: NodeJS.Timeout;
     let caputureInterval: NodeJS.Timeout;
     let snapshot: number = 0;
+    let mounted: boolean = false;
 
     // an array of just face descriptors
     let knownStudents: faceapi.LabeledFaceDescriptors[] = []
@@ -50,6 +51,8 @@
             updateKnownStudents();
         });
 
+        mounted = true;
+
     });
 
     function updateKnownStudents() {
@@ -57,6 +60,11 @@
         knownStudents = $attendance.map((student) => {
             return faceapi.LabeledFaceDescriptors.fromJSON(student.face)
         });
+
+        if(knownStudents.length == 0 && mounted == true) {
+            clearInterval(recognitionInterval);
+            startRecognitionLoop();
+        }
     }
 
     function isAbsent(name: string) {
@@ -107,16 +115,18 @@
     function startRecognitionLoop() {
         console.log('starting recognition loop at ' + new Date().toLocaleTimeString());
         const displaySize = { width: video.width, height: video.height };
+        clearInterval(recognitionInterval);
 
-        console.log('starting recog loop with known students: ', knownStudents.length);
-        const faceMatcher = new faceapi.FaceMatcher(knownStudents, 0.6);
+        if(knownStudents.length > 0) {
+            console.log('starting recog loop with known students: ', knownStudents.length);
+            const faceMatcher = new faceapi.FaceMatcher(knownStudents, 0.6);
 
-        recognitionInterval = setInterval(async () => {
+            recognitionInterval = setInterval(async () => {
                 const detections = await faceapi.detectAllFaces(video).withFaceLandmarks().withFaceDescriptors();
                 const resizedDetections = faceapi.resizeResults(detections, displaySize);
-                const results = resizedDetections.map(d => faceMatcher.findBestMatch(d.descriptor));
                 canvas.getContext('2d', {willReadFrequently: true})?.clearRect(0, 0, canvas.width, canvas.height);
 
+                const results = resizedDetections.map(d => faceMatcher.findBestMatch(d.descriptor));
 
                 results.forEach((result, i) => {
                     const box = resizedDetections[i].detection.box;
@@ -129,11 +139,18 @@
                         }
                     }
                 });
-
-                //canvas.getContext('2d', {willReadFrequently: true})?.clearRect(0, 0, canvas.width, canvas.height);
-                //faceapi.draw.drawDetections(canvas, resizedDetections);
-                //faceapi.draw.drawFaceLandmarks(canvas, resizedDetections);
             }, 100);
+        } else {
+            clearInterval(recognitionInterval);
+
+            recognitionInterval = setInterval(async () => {
+                const detections = await faceapi.detectAllFaces(video).withFaceLandmarks().withFaceDescriptors();
+                const resizedDetections = faceapi.resizeResults(detections, displaySize);
+                canvas.getContext('2d', {willReadFrequently: true})?.clearRect(0, 0, canvas.width, canvas.height);
+                faceapi.draw.drawDetections(canvas, resizedDetections);
+            }, 100);
+
+        }
     }
 
     function startCaptureLoop() {

@@ -52,3 +52,17 @@ export const POST: RequestHandler = async ({request}) => {
 
 
 }
+
+export const DELETE: RequestHandler = async ({request}) => {
+    const db = tursoClient();
+
+    await db.delete(students);
+
+    return new Response("Cleared", {
+            status: 200,
+            headers: {
+                "Content-Type": "application/json"
+            }
+        }
+    )
+}
